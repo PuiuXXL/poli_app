@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
+  LayoutAnimation,
   Platform,
   RefreshControl,
   SafeAreaView,
@@ -21,13 +22,21 @@ type Params = {
   userId?: string;
   name?: string;
   trustScore?: string;
+  scope?: 'global' | 'direct';
+  peerId?: string;
+  peerName?: string;
+  role?: 'user' | 'admin';
 };
 
 export default function ChatScreen() {
   const params = useLocalSearchParams<Params>();
   const userId = params.userId ?? '';
   const userName = params.name ?? 'Anonim';
+  const role = params.role ?? 'user';
   const trustScore = useMemo(() => Number(params.trustScore ?? '0'), [params.trustScore]);
+  const scope = (params.scope as 'global' | 'direct') ?? 'global';
+  const peerId = params.peerId ?? null;
+  const peerName = params.peerName ?? 'Utilizator';
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -43,7 +52,7 @@ export default function ChatScreen() {
 
   const loadMessages = useCallback(async () => {
     try {
-      const data = await fetchMessages();
+      const data = await fetchMessages({ scope, userId, peerId: peerId || undefined });
       setMessages(data);
       setError(null);
     } catch (err) {
@@ -52,7 +61,7 @@ export default function ChatScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [scope, userId, peerId]);
 
   useEffect(() => {
     loadMessages();
@@ -66,9 +75,10 @@ export default function ChatScreen() {
 
     setIsSending(true);
     try {
-      await sendMessage(userId, text);
+      await sendMessage(userId, text, { scope, peerId: peerId || undefined });
       setNewMessage('');
       await loadMessages();
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Nu am putut trimite mesajul.';
       setError(message);
@@ -79,19 +89,26 @@ export default function ChatScreen() {
 
   const renderItem = ({ item }: { item: ChatMessage }) => {
     const isOwn = item.userId === userId;
+    const showBadge = item.scope === 'direct' && item.recipientId;
+    const trustVisual = getTrustColors(item.trustScore, isOwn);
     return (
       <View style={[styles.bubbleContainer, isOwn ? styles.bubbleAlignEnd : styles.bubbleAlignStart]}>
-        <View style={[styles.bubble, isOwn ? styles.bubbleMe : styles.bubbleOther]}>
+        <View style={[styles.bubble, trustVisual.bubbleStyle]}>
           <View style={styles.metaRow}>
-            <Text style={[styles.sender, isOwn ? styles.textOnLight : styles.textOnDark]}>{item.sender}</Text>
-            <View style={[styles.badge, isOwn ? styles.badgeOnLight : styles.badgeOnDark]}>
-              <Text style={[styles.badgeText, isOwn ? styles.badgeTextOnLight : styles.badgeTextOnDark]}>
+            <Text style={[styles.sender, trustVisual.textColor]}>{item.sender}</Text>
+            <View style={[styles.badge, trustVisual.badgeBackground]}>
+              <Text style={[styles.badgeText, trustVisual.badgeText]}>
                 Trust {item.trustScore}
               </Text>
             </View>
           </View>
-          <Text style={[styles.content, isOwn ? styles.textOnLight : styles.textOnDark]}>{item.content}</Text>
-          <Text style={[styles.timestamp, isOwn ? styles.timestampLight : styles.timestampDark]}>
+          {showBadge ? (
+            <Text style={[styles.recipient, trustVisual.textColor]}>
+              ➜ {item.recipientId === userId ? 'Tu' : 'Destinatar direct'}
+            </Text>
+          ) : null}
+          <Text style={[styles.content, trustVisual.textColor]}>{item.content}</Text>
+          <Text style={[styles.timestamp, trustVisual.timestamp]}>
             {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
@@ -99,16 +116,26 @@ export default function ChatScreen() {
     );
   };
 
+  const headerTitle = scope === 'global' ? 'Canal universal' : `Direct cu ${peerName}`;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Salut, {userName}!</Text>
-          <Text style={styles.subline}>Canal comun pentru toți utilizatorii.</Text>
+          <Text style={styles.greeting}>{headerTitle}</Text>
+          <Text style={styles.subline}>Salut, {userName}!</Text>
         </View>
-        <View style={styles.trustPill}>
-          <Text style={styles.trustLabel}>TrustScore</Text>
-          <Text style={styles.trustValue}>{trustScore}</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.profileButton}
+            onPress={() =>
+              router.push({
+                pathname: '/profile',
+                params: { userId, name: userName, trustScore: String(trustScore), role },
+              })
+            }>
+            <Text style={styles.profileText}>Profil</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -157,46 +184,59 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B1221',
+    backgroundColor: '#050915',
   },
   header: {
-    paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingTop: 48,
+    paddingBottom: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#0c1624',
+    borderBottomWidth: 1,
+    borderBottomColor: '#111b2e',
+    shadowColor: '#000',
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   greeting: {
     color: '#E5E7EB',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
   },
   subline: {
     color: '#9CA3AF',
-    marginTop: 4,
+    marginTop: 8,
   },
-  trustPill: {
-    backgroundColor: '#111827',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+  profileButton: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 16,
+    backgroundColor: '#2563eb',
     borderWidth: 1,
-    borderColor: '#1F2937',
-    alignItems: 'flex-end',
+    borderColor: '#1d4ed8',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
   },
-  trustLabel: {
-    color: '#9CA3AF',
-    fontSize: 12,
-  },
-  trustValue: {
-    color: '#38BDF8',
+  profileText: {
+    color: '#E5E7EB',
     fontWeight: '800',
-    fontSize: 18,
+    letterSpacing: 0.3,
   },
   list: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
   },
   emptyList: {
     flexGrow: 1,
@@ -221,16 +261,6 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 6,
   },
-  bubbleMe: {
-    backgroundColor: '#38BDF8',
-    borderTopRightRadius: 4,
-  },
-  bubbleOther: {
-    backgroundColor: '#111827',
-    borderWidth: 1,
-    borderColor: '#1F2937',
-    borderTopLeftRadius: 4,
-  },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -249,6 +279,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
   },
+  recipient: {
+    fontSize: 12,
+    opacity: 0.85,
+  },
   content: {
     fontSize: 15,
     lineHeight: 21,
@@ -256,30 +290,6 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 11,
     alignSelf: 'flex-end',
-  },
-  textOnLight: {
-    color: '#0B1221',
-  },
-  textOnDark: {
-    color: '#E5E7EB',
-  },
-  badgeOnLight: {
-    backgroundColor: 'rgba(0,0,0,0.06)',
-  },
-  badgeOnDark: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  badgeTextOnLight: {
-    color: '#0B1221',
-  },
-  badgeTextOnDark: {
-    color: '#E5E7EB',
-  },
-  timestampLight: {
-    color: '#0B1221',
-  },
-  timestampDark: {
-    color: '#9CA3AF',
   },
   errorBox: {
     marginHorizontal: 16,
@@ -297,23 +307,23 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     padding: 12,
     gap: 8,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#0c1624',
     borderTopWidth: 1,
-    borderColor: '#111827',
+    borderColor: '#111b2e',
   },
   textInput: {
     flex: 1,
     minHeight: 44,
     maxHeight: 120,
     padding: 12,
-    backgroundColor: '#111827',
+    backgroundColor: '#0f1b2f',
     borderRadius: 14,
     color: '#E5E7EB',
     borderWidth: 1,
-    borderColor: '#1F2937',
+    borderColor: '#1b2a40',
   },
   sendButton: {
-    backgroundColor: '#38BDF8',
+    backgroundColor: '#2563eb',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
@@ -330,3 +340,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+function getTrustColors(trust: number, isOwn: boolean) {
+  if (trust < 50) {
+    return {
+      bubbleStyle: { backgroundColor: isOwn ? '#ef4444' : '#3b0f16', borderColor: '#7f1d1d', borderWidth: 1 },
+      textColor: { color: isOwn ? '#0B1221' : '#fef2f2' },
+      badgeBackground: { backgroundColor: isOwn ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' },
+      badgeText: { color: isOwn ? '#0B1221' : '#fef2f2' },
+      timestamp: { color: isOwn ? '#0B1221' : '#fca5a5' },
+    };
+  }
+  if (trust < 80) {
+    return {
+      bubbleStyle: { backgroundColor: isOwn ? '#facc15' : '#3a300a', borderColor: '#854d0e', borderWidth: 1 },
+      textColor: { color: isOwn ? '#0B1221' : '#fefce8' },
+      badgeBackground: { backgroundColor: isOwn ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' },
+      badgeText: { color: isOwn ? '#0B1221' : '#fefce8' },
+      timestamp: { color: isOwn ? '#0B1221' : '#fde68a' },
+    };
+  }
+  return {
+    bubbleStyle: { backgroundColor: isOwn ? '#22c55e' : '#0f291b', borderColor: '#166534', borderWidth: 1 },
+    textColor: { color: isOwn ? '#0B1221' : '#dcfce7' },
+    badgeBackground: { backgroundColor: isOwn ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' },
+    badgeText: { color: isOwn ? '#0B1221' : '#dcfce7' },
+    timestamp: { color: isOwn ? '#0B1221' : '#86efac' },
+  };
+}

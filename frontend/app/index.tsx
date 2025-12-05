@@ -31,12 +31,14 @@ export default function LoginScreen() {
 
     try {
       const user = await loginUser(trimmed);
+      const destination = user.role === 'admin' ? '/admin' : '/chats';
       router.push({
-        pathname: '/chat',
+        pathname: destination,
         params: {
           userId: user.id,
           name: user.name,
           trustScore: String(user.trustScore),
+          role: user.role ?? 'user',
         },
       });
     } catch (err) {
@@ -79,7 +81,7 @@ export default function LoginScreen() {
             {isLoading ? (
               <ActivityIndicator color="#0F172A" />
             ) : (
-              <Text style={styles.buttonText}>Intră în chat</Text>
+              <Text style={styles.buttonText}>Continuă</Text>
             )}
           </TouchableOpacity>
           <Text style={styles.hint}>Supabase: {SUPABASE_URL}</Text>

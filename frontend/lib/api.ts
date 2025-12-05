@@ -23,13 +23,18 @@ export async function loginUser(name: string): Promise<User> {
     throw new Error(existing.error.message);
   }
   if (existing.data) {
-    return { id: existing.data.id, name: existing.data.name, trustScore: existing.data.trust_score };
+    return {
+      id: existing.data.id,
+      name: existing.data.name,
+      trustScore: existing.data.trust_score,
+      role: existing.data.role ?? 'user',
+    };
   }
 
   const trustScore = 50;
   const insert = await supabase
     .from('users')
-    .insert({ name: cleaned, trust_score: trustScore })
+    .insert({ name: cleaned, trust_score: trustScore, role: 'user' })
     .select()
     .single();
 
@@ -37,15 +42,51 @@ export async function loginUser(name: string): Promise<User> {
     throw new Error(insert.error.message);
   }
 
-  return { id: insert.data.id, name: insert.data.name, trustScore: insert.data.trust_score };
+  return {
+    id: insert.data.id,
+    name: insert.data.name,
+    trustScore: insert.data.trust_score,
+    role: insert.data.role ?? 'user',
+  };
 }
 
-export async function fetchMessages(): Promise<ChatMessage[]> {
-  const { data, error } = await supabase
+export async function fetchUsers(): Promise<User[]> {
+  const { data, error } = await supabase.from('users').select('id, name, trust_score, role').order('name');
+  if (error) {
+    throw new Error(error.message);
+  }
+  return (
+    data?.map((u) => ({
+      id: u.id,
+      name: u.name,
+      trustScore: u.trust_score,
+      role: (u.role as 'user' | 'admin') ?? 'user',
+    })) ?? []
+  );
+}
+
+export async function fetchMessages(params: {
+  scope: 'global' | 'direct';
+  userId: string;
+  peerId?: string;
+}): Promise<ChatMessage[]> {
+  const { scope, userId, peerId } = params;
+
+  let query = supabase
     .from('messages')
-    .select('id, user_id, sender, trust_score, content, created_at')
+    .select('id, user_id, sender, trust_score, content, created_at, recipient_id, scope')
     .order('created_at', { ascending: true })
     .limit(200);
+
+  if (scope === 'global') {
+    query = query.eq('scope', 'global');
+  } else {
+    if (!peerId) throw new Error('Lipsește peerId pentru chat direct.');
+    const orFilter = `and(user_id.eq.${userId},recipient_id.eq.${peerId}),and(user_id.eq.${peerId},recipient_id.eq.${userId})`;
+    query = query.eq('scope', 'direct').or(orFilter);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);
@@ -59,11 +100,17 @@ export async function fetchMessages(): Promise<ChatMessage[]> {
       trustScore: m.trust_score,
       content: m.content,
       createdAt: m.created_at,
+      recipientId: m.recipient_id,
+      scope: (m.scope as 'global' | 'direct') ?? 'global',
     })) ?? []
   );
 }
 
-export async function sendMessage(userId: string, content: string): Promise<ChatMessage> {
+export async function sendMessage(
+  userId: string,
+  content: string,
+  options?: { scope?: 'global' | 'direct'; peerId?: string },
+): Promise<ChatMessage> {
   const text = content.trim();
   if (!text) {
     throw new Error('Mesajul nu poate fi gol.');
@@ -74,15 +121,26 @@ export async function sendMessage(userId: string, content: string): Promise<Chat
     throw new Error(user.error?.message || 'Utilizatorul nu există.');
   }
 
+  const scope = options?.scope ?? 'global';
+  const peerId = options?.peerId;
+
+  const insertPayload: Record<string, unknown> = {
+    user_id: user.data.id,
+    sender: user.data.name,
+    trust_score: user.data.trust_score,
+    content: text,
+    scope,
+  };
+
+  if (scope === 'direct') {
+    if (!peerId) throw new Error('Lipsește peerId pentru chat direct.');
+    insertPayload.recipient_id = peerId;
+  }
+
   const messageInsert = await supabase
     .from('messages')
-    .insert({
-      user_id: user.data.id,
-      sender: user.data.name,
-      trust_score: user.data.trust_score,
-      content: text,
-    })
-    .select('id, user_id, sender, trust_score, content, created_at')
+    .insert(insertPayload)
+    .select('id, user_id, sender, trust_score, content, created_at, recipient_id, scope')
     .single();
 
   if (messageInsert.error) {
@@ -97,6 +155,8 @@ export async function sendMessage(userId: string, content: string): Promise<Chat
     trustScore: m.trust_score,
     content: m.content,
     createdAt: m.created_at,
+    recipientId: m.recipient_id,
+    scope: (m.scope as 'global' | 'direct') ?? 'global',
   };
 
   // Optional: call external analysis API; if unavailable, keep current trust score.
