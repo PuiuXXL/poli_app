@@ -17,6 +17,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { fetchMessages, sendMessage } from '@/lib/api';
 import { ChatMessage } from '@/types/chat';
+import { theme } from '@/theme';
 
 type Params = {
   userId?: string;
@@ -184,23 +185,19 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050915',
+    backgroundColor: theme.colors.background,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 48,
-    paddingBottom: 18,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: 56,
+    paddingBottom: theme.spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0c1624',
+    backgroundColor: theme.colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#111b2e',
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    borderBottomColor: theme.colors.border,
+    ...theme.shadows.card,
   },
   headerActions: {
     flexDirection: 'row',
@@ -208,35 +205,31 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   greeting: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontSize: 20,
     fontWeight: '800',
   },
   subline: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     marginTop: 8,
   },
   profileButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 16,
-    backgroundColor: '#2563eb',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.accent,
     borderWidth: 1,
-    borderColor: '#1d4ed8',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    borderColor: theme.colors.accentGlow,
+    ...theme.shadows.button,
   },
   profileText: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   list: {
     flex: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: theme.spacing.md,
   },
   emptyList: {
     flexGrow: 1,
@@ -257,9 +250,10 @@ const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '86%',
-    borderRadius: 16,
-    padding: 12,
-    gap: 6,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    ...theme.shadows.card,
   },
   metaRow: {
     flexDirection: 'row',
@@ -269,11 +263,12 @@ const styles = StyleSheet.create({
   },
   sender: {
     fontWeight: '800',
+    letterSpacing: 0.2,
   },
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.pill,
   },
   badgeText: {
     fontWeight: '700',
@@ -292,50 +287,55 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   errorBox: {
-    marginHorizontal: 16,
-    backgroundColor: '#FCA5A5',
-    padding: 12,
-    borderRadius: 12,
+    marginHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.error,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
   },
   errorText: {
-    color: '#7F1D1D',
+    color: '#1F2937',
     fontWeight: '600',
     textAlign: 'center',
   },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 12,
-    gap: 8,
-    backgroundColor: '#0c1624',
+    padding: theme.spacing.md,
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.card,
     borderTopWidth: 1,
-    borderColor: '#111b2e',
+    borderColor: theme.colors.border,
   },
   textInput: {
     flex: 1,
     minHeight: 44,
     maxHeight: 120,
-    padding: 12,
-    backgroundColor: '#0f1b2f',
-    borderRadius: 14,
-    color: '#E5E7EB',
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.input,
+    borderRadius: theme.radius.md,
+    color: theme.colors.text,
     borderWidth: 1,
-    borderColor: '#1b2a40',
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.primaryGlow,
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   sendButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 88,
+    ...theme.shadows.button,
   },
   sendDisabled: {
     opacity: 0.65,
   },
   sendText: {
-    color: '#0F172A',
+    color: theme.colors.background,
     fontWeight: '800',
     fontSize: 14,
   },
@@ -344,26 +344,38 @@ const styles = StyleSheet.create({
 function getTrustColors(trust: number, isOwn: boolean) {
   if (trust < 50) {
     return {
-      bubbleStyle: { backgroundColor: isOwn ? '#ef4444' : '#3b0f16', borderColor: '#7f1d1d', borderWidth: 1 },
-      textColor: { color: isOwn ? '#0B1221' : '#fef2f2' },
-      badgeBackground: { backgroundColor: isOwn ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' },
-      badgeText: { color: isOwn ? '#0B1221' : '#fef2f2' },
-      timestamp: { color: isOwn ? '#0B1221' : '#fca5a5' },
+      bubbleStyle: {
+        backgroundColor: isOwn ? theme.colors.trust.low : '#2b0d16',
+        borderColor: '#fda4af',
+        borderWidth: 1,
+      },
+      textColor: { color: isOwn ? '#0B1221' : '#ffe4e6' },
+      badgeBackground: { backgroundColor: 'rgba(255,255,255,0.12)' },
+      badgeText: { color: isOwn ? '#0B1221' : '#ffe4e6' },
+      timestamp: { color: isOwn ? '#0B1221' : '#fecdd3' },
     };
   }
   if (trust < 80) {
     return {
-      bubbleStyle: { backgroundColor: isOwn ? '#facc15' : '#3a300a', borderColor: '#854d0e', borderWidth: 1 },
+      bubbleStyle: {
+        backgroundColor: isOwn ? '#fbbf24' : '#2a210c',
+        borderColor: '#facc15',
+        borderWidth: 1,
+      },
       textColor: { color: isOwn ? '#0B1221' : '#fefce8' },
-      badgeBackground: { backgroundColor: isOwn ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' },
+      badgeBackground: { backgroundColor: 'rgba(255,255,255,0.12)' },
       badgeText: { color: isOwn ? '#0B1221' : '#fefce8' },
       timestamp: { color: isOwn ? '#0B1221' : '#fde68a' },
     };
   }
   return {
-    bubbleStyle: { backgroundColor: isOwn ? '#22c55e' : '#0f291b', borderColor: '#166534', borderWidth: 1 },
+    bubbleStyle: {
+      backgroundColor: isOwn ? theme.colors.trust.high : '#0f291b',
+      borderColor: '#34d399',
+      borderWidth: 1,
+    },
     textColor: { color: isOwn ? '#0B1221' : '#dcfce7' },
-    badgeBackground: { backgroundColor: isOwn ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' },
+    badgeBackground: { backgroundColor: 'rgba(255,255,255,0.12)' },
     badgeText: { color: isOwn ? '#0B1221' : '#dcfce7' },
     timestamp: { color: isOwn ? '#0B1221' : '#86efac' },
   };

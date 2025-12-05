@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { fetchMessagesByUser, fetchUsers, setUserBan } from '@/lib/api';
 import { ChatMessage, User } from '@/types/chat';
+import { theme } from '@/theme';
 
 type Params = {
   userId?: string;
@@ -58,9 +59,9 @@ export default function AdminScreen() {
   }, []);
 
   const trustVisual = (trust: number) => {
-    if (trust < 50) return { bar: '#c2410c', card: '#3b0f16', text: '#fef2f2' };
-    if (trust < 80) return { bar: '#d97706', card: '#3a300a', text: '#fefce8' };
-    return { bar: '#16a34a', card: '#0f291b', text: '#dcfce7' };
+    if (trust < 50) return { bar: theme.colors.trust.low, card: '#2b0d16', text: '#ffe4e6' };
+    if (trust < 80) return { bar: theme.colors.trust.medium, card: '#2a210c', text: '#fefce8' };
+    return { bar: theme.colors.trust.high, card: '#0f291b', text: '#dcfce7' };
   };
 
   const handleSelectUser = async (user: User) => {
@@ -202,9 +203,9 @@ export default function AdminScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050915',
-    paddingHorizontal: 18,
-    paddingTop: 48,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: 56,
   },
   header: {
     flexDirection: 'row',
@@ -213,37 +214,33 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontSize: 24,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     marginTop: 4,
   },
   profileButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: '#2563eb',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.accent,
     borderWidth: 1,
-    borderColor: '#1d4ed8',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    borderColor: theme.colors.accentGlow,
+    ...theme.shadows.button,
   },
   profileText: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   card: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -262,15 +259,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   smallButton: {
-    backgroundColor: '#1f2937',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.radius.sm,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   smallButtonText: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '700',
   },
   trustLabel: {
@@ -281,7 +278,7 @@ const styles = StyleSheet.create({
   progress: {
     marginTop: 6,
     height: 12,
-    backgroundColor: '#111827',
+    backgroundColor: theme.colors.surface,
     borderRadius: 999,
     overflow: 'hidden',
   },
@@ -297,27 +294,28 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorBox: {
-    backgroundColor: '#FCA5A5',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 12,
+    backgroundColor: theme.colors.error,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    marginBottom: theme.spacing.md,
   },
   errorText: {
-    color: '#7F1D1D',
+    color: '#1F2937',
     fontWeight: '600',
     textAlign: 'center',
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
-    padding: 16,
+    padding: theme.spacing.lg,
   },
   modalCard: {
-    backgroundColor: '#0c1624',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
     maxHeight: '80%',
+    ...theme.shadows.card,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -326,20 +324,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalTitle: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: '800',
   },
   closeText: {
-    color: '#38BDF8',
+    color: theme.colors.primaryGlow,
     fontWeight: '700',
   },
   msgCard: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
-    backgroundColor: '#0f1b2f',
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+    backgroundColor: theme.colors.surfaceAlt,
   },
   msgHeader: {
     flexDirection: 'row',
@@ -354,7 +352,7 @@ const styles = StyleSheet.create({
   },
   msgContent: {
     marginBottom: 4,
-    color: '#E5E7EB',
+    color: theme.colors.text,
   },
   msgTime: {
     fontSize: 12,

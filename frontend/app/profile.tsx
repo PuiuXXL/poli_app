@@ -1,6 +1,8 @@
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 
+import { theme } from '@/theme';
+
 type Params = {
   userId?: string;
   name?: string;
@@ -57,22 +59,18 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050915',
+    backgroundColor: theme.colors.background,
     padding: 20,
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: '#0f1b2f',
-    borderRadius: 18,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.lg,
     padding: 20,
     gap: 16,
     borderWidth: 1,
-    borderColor: '#1b2a40',
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    borderColor: theme.colors.border,
+    ...theme.shadows.card,
   },
   headerRow: {
     flexDirection: 'row',
@@ -80,7 +78,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontSize: 22,
     fontWeight: '800',
   },
@@ -90,23 +88,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     fontWeight: '600',
   },
   value: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '700',
   },
   trustPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#102544',
+    backgroundColor: theme.colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: '#1d3557',
+    borderColor: theme.colors.border,
   },
   trustValue: {
-    color: '#38BDF8',
+    color: theme.colors.primaryGlow,
     fontWeight: '800',
   },
   logout: {
@@ -115,11 +113,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    ...theme.shadows.button,
   },
   logoutText: {
     color: '#0B1221',
@@ -129,19 +123,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2563eb',
+    backgroundColor: theme.colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#1d4ed8',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    borderColor: theme.colors.accentGlow,
+    ...theme.shadows.button,
   },
   avatarText: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '800',
     fontSize: 16,
     letterSpacing: 0.5,

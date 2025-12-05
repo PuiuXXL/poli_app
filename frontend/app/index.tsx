@@ -14,6 +14,7 @@ import {
 import { router } from 'expo-router';
 
 import { loginUser, SUPABASE_URL } from '@/lib/api';
+import { theme } from '@/theme';
 
 export default function LoginScreen() {
   const [name, setName] = useState('');
@@ -74,6 +75,7 @@ export default function LoginScreen() {
             value={name}
             onChangeText={setName}
             placeholder="ex: Alex"
+            placeholderTextColor={theme.colors.textDim}
             autoCapitalize="words"
             autoCorrect={false}
             style={styles.input}
@@ -84,7 +86,7 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={isLoading}>
             {isLoading ? (
-              <ActivityIndicator color="#0F172A" />
+              <ActivityIndicator color={theme.colors.background} />
             ) : (
               <Text style={styles.buttonText}>Continuă</Text>
             )}
@@ -99,73 +101,79 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
   hero: {
-    paddingTop: 48,
-    paddingHorizontal: 24,
-    gap: 12,
+    paddingTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.xl,
+    gap: theme.spacing.md,
   },
   brand: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#E0F2FE',
+    color: theme.colors.text,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#C7D7ED',
+    fontSize: theme.typography.subtitle,
+    color: theme.colors.textDim,
     lineHeight: 22,
   },
   card: {
-    marginTop: 32,
-    marginHorizontal: 24,
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 20,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    marginTop: theme.spacing.lg,
+    marginHorizontal: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    ...theme.shadows.card,
   },
   label: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     fontSize: 14,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: '#1F2937',
-    color: '#E5E7EB',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    backgroundColor: theme.colors.input,
+    color: theme.colors.text,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: theme.colors.border,
     fontSize: 16,
+    shadowColor: theme.colors.primaryGlow,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
   },
   button: {
-    backgroundColor: '#38BDF8',
-    paddingVertical: 14,
-    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     marginTop: 4,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryGlow,
+    ...theme.shadows.button,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
   buttonText: {
     fontWeight: '700',
-    color: '#0F172A',
+    color: theme.colors.background,
     fontSize: 16,
+    letterSpacing: 0.3,
   },
   error: {
-    color: '#FCA5A5',
-    marginTop: 4,
+    color: theme.colors.error,
+    marginTop: theme.spacing.xs,
   },
   hint: {
-    marginTop: 8,
-    color: '#6B7280',
+    marginTop: theme.spacing.sm,
+    color: theme.colors.textDim,
     fontSize: 12,
   },
 });

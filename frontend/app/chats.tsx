@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 import { fetchUsers } from '@/lib/api';
 import { User } from '@/types/chat';
+import { theme } from '@/theme';
 
 type Params = {
   userId?: string;
@@ -125,9 +126,9 @@ export default function ChatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050915',
-    paddingHorizontal: 18,
-    paddingTop: 48,
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: 56,
   },
   header: {
     flexDirection: 'row',
@@ -136,72 +137,70 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontSize: 24,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     marginTop: 4,
   },
   profileButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
-    backgroundColor: '#2563eb',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.accent,
     borderWidth: 1,
-    borderColor: '#1d4ed8',
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    borderColor: theme.colors.accentGlow,
+    ...theme.shadows.button,
   },
   profileText: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   globalCard: {
-    backgroundColor: '#0f1b2f',
-    padding: 16,
-    borderRadius: 14,
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: '#1b2a40',
-    marginBottom: 16,
+    borderColor: theme.colors.border,
+    marginBottom: theme.spacing.md,
+    ...theme.shadows.card,
   },
   globalTitle: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '800',
     fontSize: 18,
   },
   globalDesc: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     marginTop: 4,
   },
   sectionHeader: {
     marginBottom: 8,
   },
   sectionTitle: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '700',
     fontSize: 16,
   },
   userCard: {
-    backgroundColor: '#0f1b2f',
-    padding: 14,
-    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    padding: theme.spacing.md,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: '#1b2a40',
+    borderColor: theme.colors.border,
     marginBottom: 10,
+    ...theme.shadows.card,
   },
   userName: {
-    color: '#E5E7EB',
+    color: theme.colors.text,
     fontWeight: '700',
     fontSize: 16,
   },
   userMeta: {
-    color: '#9CA3AF',
+    color: theme.colors.textDim,
     marginTop: 4,
   },
   emptyContainer: {
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
   },
   adminTag: {
     marginTop: 4,
-    color: '#22c55e',
+    color: theme.colors.trust.high,
     fontWeight: '700',
   },
   empty: {
