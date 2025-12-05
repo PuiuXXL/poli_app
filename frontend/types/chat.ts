@@ -3,6 +3,7 @@ export type User = {
   name: string;
   role?: 'user' | 'admin';
   trustScore: number;
+  banned?: boolean;
 };
 
 export type ChatMessage = {

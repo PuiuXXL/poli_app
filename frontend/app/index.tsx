@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -31,6 +32,10 @@ export default function LoginScreen() {
 
     try {
       const user = await loginUser(trimmed);
+      if (user.banned) {
+        Alert.alert('Access blocat', 'You have been banned :(');
+        return;
+      }
       const destination = user.role === 'admin' ? '/admin' : '/chats';
       router.push({
         pathname: destination,

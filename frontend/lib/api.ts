@@ -28,13 +28,14 @@ export async function loginUser(name: string): Promise<User> {
       name: existing.data.name,
       trustScore: existing.data.trust_score,
       role: existing.data.role ?? 'user',
+      banned: existing.data.banned ?? false,
     };
   }
 
   const trustScore = 50;
   const insert = await supabase
     .from('users')
-    .insert({ name: cleaned, trust_score: trustScore, role: 'user' })
+    .insert({ name: cleaned, trust_score: trustScore, role: 'user', banned: false })
     .select()
     .single();
 
@@ -47,11 +48,15 @@ export async function loginUser(name: string): Promise<User> {
     name: insert.data.name,
     trustScore: insert.data.trust_score,
     role: insert.data.role ?? 'user',
+    banned: insert.data.banned ?? false,
   };
 }
 
 export async function fetchUsers(): Promise<User[]> {
-  const { data, error } = await supabase.from('users').select('id, name, trust_score, role').order('name');
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, trust_score, role, banned')
+    .order('name');
   if (error) {
     throw new Error(error.message);
   }
@@ -61,6 +66,7 @@ export async function fetchUsers(): Promise<User[]> {
       name: u.name,
       trustScore: u.trust_score,
       role: (u.role as 'user' | 'admin') ?? 'user',
+      banned: u.banned ?? false,
     })) ?? []
   );
 }
@@ -104,6 +110,37 @@ export async function fetchMessages(params: {
       scope: (m.scope as 'global' | 'direct') ?? 'global',
     })) ?? []
   );
+}
+
+export async function fetchMessagesByUser(userId: string): Promise<ChatMessage[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('id, user_id, sender, trust_score, content, created_at, recipient_id, scope')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error) throw new Error(error.message);
+
+  return (
+    data?.map((m) => ({
+      id: m.id,
+      userId: m.user_id,
+      sender: m.sender,
+      trustScore: m.trust_score,
+      content: m.content,
+      createdAt: m.created_at,
+      recipientId: m.recipient_id,
+      scope: (m.scope as 'global' | 'direct') ?? 'global',
+    })) ?? []
+  );
+}
+
+export async function setUserBan(userId: string, banned: boolean): Promise<void> {
+  const { error } = await supabase.from('users').update({ banned }).eq('id', userId);
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function sendMessage(
