@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   LayoutAnimation,
@@ -76,7 +77,10 @@ export default function ChatScreen() {
 
     setIsSending(true);
     try {
-      await sendMessage(userId, text, { scope, peerId: peerId || undefined });
+      const sent = await sendMessage(userId, text, { scope, peerId: peerId || undefined });
+      if (sent?.trustScore < 30) {
+        Alert.alert('TrustScore scăzut', 'Utilizatorul are un scor critic');
+      }
       setNewMessage('');
       await loadMessages();
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

@@ -185,7 +185,7 @@ export async function sendMessage(
   }
 
   const m = messageInsert.data;
-  const baseMessage: ChatMessage = {
+  let baseMessage: ChatMessage = {
     id: m.id,
     userId: m.user_id,
     sender: m.sender,
@@ -205,7 +205,23 @@ export async function sendMessage(
     messageId: m.id,
   });
 
-  return withAnalyzedTrustScore(baseMessage, analysis);
+  let analyzedMessage = withAnalyzedTrustScore(baseMessage, analysis);
+
+  // Persist the updated trust score if API returned one, so future fetches show it.
+  if (analysis && Number.isFinite(analysis.trustScore)) {
+    const newScore = Math.round(analysis.trustScore);
+    try {
+      await Promise.all([
+        supabase.from('users').update({ trust_score: newScore }).eq('id', user.data.id),
+        supabase.from('messages').update({ trust_score: newScore }).eq('id', m.id),
+      ]);
+      analyzedMessage = { ...analyzedMessage, trustScore: newScore };
+    } catch (err) {
+      console.warn('Nu am putut salva TrustScore-ul nou in Supabase:', err);
+    }
+  }
+
+  return analyzedMessage;
 }
 
 export { SUPABASE_URL };
