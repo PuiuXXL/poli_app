@@ -19,9 +19,20 @@ const ANALYSIS_API_TOKEN = ANALYSIS_API_TOKEN_RAW?.replace(/^Bearer\s+/i, '') ??
 
 const hasExternalApi = Boolean(ANALYSIS_API_BASE && ANALYSIS_API_TOKEN);
 
-function buildUrl(path: string) {
-  const base = ANALYSIS_API_BASE || '';
-  return `${base}${path.startsWith('/') ? path : `/${path}`}`;
+// Accept either base URL (ex: http://10.0.2.2:8000) or full endpoint (ex: http://10.0.2.2:8000/events/message)
+const MESSAGE_ENDPOINT =
+  ANALYSIS_API_BASE && ANALYSIS_API_BASE.endsWith('/events/message')
+    ? ANALYSIS_API_BASE
+    : ANALYSIS_API_BASE
+    ? `${ANALYSIS_API_BASE}/events/message`
+    : '';
+
+function trustEndpointForUser(externalId: string) {
+  if (!ANALYSIS_API_BASE) return '';
+  const base = ANALYSIS_API_BASE.endsWith('/events/message')
+    ? ANALYSIS_API_BASE.replace(/\/events\/message$/, '')
+    : ANALYSIS_API_BASE;
+  return `${base}/users/${encodeURIComponent(externalId)}/trust`;
 }
 
 function hashExternalUserId(userId: string) {
@@ -29,8 +40,13 @@ function hashExternalUserId(userId: string) {
   return userId;
 }
 
-async function postMessageForAnalysis(externalId: string, payload: AnalyzePayload) {
-  const url = buildUrl('/events/message');
+type MessageResponse = { trust?: { score?: number }; reason?: string; label?: string } & Record<string, unknown>;
+
+async function postMessageForAnalysis(externalId: string, payload: AnalyzePayload): Promise<MessageResponse> {
+  const url = MESSAGE_ENDPOINT;
+  if (!url) {
+    throw new Error('Analysis API base URL is missing');
+  }
   const body = {
     external_user_id: externalId,
     message: payload.content,
@@ -50,12 +66,16 @@ async function postMessageForAnalysis(externalId: string, payload: AnalyzePayloa
   });
 
   if (!res.ok) {
-    throw new Error(`Analysis API failed: ${res.status}`);
+    const text = await res.text().catch(() => '');
+    throw new Error(`Analysis API failed: ${res.status} ${text}`);
   }
+
+  return (await res.json().catch(() => ({}))) as MessageResponse;
 }
 
 async function fetchTrustForUser(externalId: string): Promise<number | null> {
-  const url = buildUrl(`/users/${encodeURIComponent(externalId)}/trust`);
+  const url = trustEndpointForUser(externalId);
+  if (!url) return null;
   const res = await fetch(url, {
     headers: {
       Authorization: `Bearer ${ANALYSIS_API_TOKEN}`,
@@ -63,7 +83,8 @@ async function fetchTrustForUser(externalId: string): Promise<number | null> {
   });
 
   if (!res.ok) {
-    throw new Error(`Trust fetch failed: ${res.status}`);
+    const text = await res.text().catch(() => '');
+    throw new Error(`Trust fetch failed: ${res.status} ${text}`);
   }
 
   const data = (await res.json()) as { trust?: { score?: number } } | { trust_score?: number; score?: number };
@@ -85,6 +106,8 @@ export async function analyzeMessage(payload: AnalyzePayload): Promise<AnalyzeRe
   try {
     const externalId = hashExternalUserId(payload.userId);
     await postMessageForAnalysis(externalId, payload);
+
+    // Autoritativ: trust-ul din GET /users/{id}/trust
     const trust = await fetchTrustForUser(externalId);
     if (typeof trust === 'number') {
       return { trustScore: trust };
