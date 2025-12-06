@@ -1,3 +1,5 @@
+import Constants from 'expo-constants';
+import CryptoJS from 'crypto-js';
 import { ChatMessage } from '@/types/chat';
 
 type AnalyzePayload = {
@@ -13,11 +15,76 @@ type AnalyzeResponse = {
   reason?: string;
 };
 
-const ANALYSIS_API_BASE = process.env.EXPO_PUBLIC_TRUST_API_URL?.trim()?.replace(/\/+$/, '');
-const ANALYSIS_API_TOKEN_RAW = process.env.EXPO_PUBLIC_TRUST_API_TOKEN?.trim();
-const ANALYSIS_API_TOKEN = ANALYSIS_API_TOKEN_RAW?.replace(/^Bearer\s+/i, '') ?? null;
+function readEnv(key: string): string | undefined {
+  const fromProcess = process.env?.[key];
+  if (typeof fromProcess === 'string') return fromProcess.trim();
+  const extra = Constants.expoConfig?.extra as Record<string, unknown> | undefined;
+  const fromExtra = extra?.[key];
+  if (fromExtra === undefined || fromExtra === null) return undefined;
+  return String(fromExtra).trim();
+}
 
-const hasExternalApi = Boolean(ANALYSIS_API_BASE && ANALYSIS_API_TOKEN);
+// Hard defaults (requested) – override via .env if available.
+const TRUST_DEFAULT_SECRET = 'nLwJhoM2xhfs3e8eGekGymQ9ujTf5A2szney6WyTVA';
+const TRUST_DEFAULT_PLATFORM_ID = '6';
+const TRUST_DEFAULT_PLATFORM_NAME = 'test-platform';
+
+const ANALYSIS_API_BASE = readEnv('EXPO_PUBLIC_TRUST_API_URL')?.replace(/\/+$/, '');
+const ANALYSIS_API_TOKEN_RAW = readEnv('EXPO_PUBLIC_TRUST_API_TOKEN');
+const TRUST_JWT_SECRET = readEnv('EXPO_PUBLIC_TRUST_API_JWT_SECRET') || TRUST_DEFAULT_SECRET;
+const TRUST_PLATFORM_ID = readEnv('EXPO_PUBLIC_TRUST_API_PLATFORM_ID') || TRUST_DEFAULT_PLATFORM_ID;
+const TRUST_PLATFORM_NAME = readEnv('EXPO_PUBLIC_TRUST_API_PLATFORM_NAME') || TRUST_DEFAULT_PLATFORM_NAME;
+const TRUST_JWT_EXP_MINUTES = Number(readEnv('EXPO_PUBLIC_TRUST_API_JWT_EXP_MINUTES') || '15');
+
+type GeneratedToken = { token: string; exp: number };
+let cachedToken: GeneratedToken | null = null;
+
+const hasExternalApi = Boolean(ANALYSIS_API_BASE);
+
+function base64UrlEncode(input: CryptoJS.lib.WordArray | string) {
+  const wordArray = typeof input === 'string' ? CryptoJS.enc.Utf8.parse(input) : input;
+  return CryptoJS.enc.Base64.stringify(wordArray).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function createJwtToken(): string {
+  const missing: string[] = [];
+  if (!TRUST_JWT_SECRET) missing.push('EXPO_PUBLIC_TRUST_API_JWT_SECRET');
+  if (!TRUST_PLATFORM_ID) missing.push('EXPO_PUBLIC_TRUST_API_PLATFORM_ID');
+  if (!TRUST_PLATFORM_NAME) missing.push('EXPO_PUBLIC_TRUST_API_PLATFORM_NAME');
+
+  if (missing.length) {
+    const fallback = ANALYSIS_API_TOKEN_RAW?.replace(/^Bearer\s+/i, '');
+    if (fallback) return fallback;
+    throw new Error(`Trust API JWT config lipseste: ${missing.join(', ')}`);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const expMinutes = Number.isFinite(TRUST_JWT_EXP_MINUTES) && TRUST_JWT_EXP_MINUTES > 0 ? TRUST_JWT_EXP_MINUTES : 15;
+  const exp = now + expMinutes * 60;
+
+  if (cachedToken && cachedToken.exp - 30 > now) {
+    return cachedToken.token;
+  }
+
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const payload = {
+    platform_id: Number.isFinite(Number(TRUST_PLATFORM_ID)) ? Number(TRUST_PLATFORM_ID) : TRUST_PLATFORM_ID,
+    name: TRUST_PLATFORM_NAME,
+    iat: now,
+    exp,
+  };
+
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const data = `${encodedHeader}.${encodedPayload}`;
+
+  const signature = CryptoJS.HmacSHA256(data, TRUST_JWT_SECRET);
+  const encodedSignature = base64UrlEncode(signature);
+
+  const token = `${data}.${encodedSignature}`;
+  cachedToken = { token, exp };
+  return token;
+}
 
 // Accept either base URL (ex: http://10.0.2.2:8000) or full endpoint (ex: http://10.0.2.2:8000/events/message)
 const MESSAGE_ENDPOINT =
@@ -59,7 +126,7 @@ async function postMessageForAnalysis(externalId: string, payload: AnalyzePayloa
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${ANALYSIS_API_TOKEN}`,
+      Authorization: `Bearer ${createJwtToken()}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -78,7 +145,7 @@ async function fetchTrustForUser(externalId: string): Promise<number | null> {
   if (!url) return null;
   const res = await fetch(url, {
     headers: {
-      Authorization: `Bearer ${ANALYSIS_API_TOKEN}`,
+      Authorization: `Bearer ${createJwtToken()}`,
     },
   });
 
