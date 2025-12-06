@@ -352,7 +352,7 @@ function getTrustColors(trust: number, isOwn: boolean) {
 
   const baseBubble = isOwn
     ? {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: trustColor,
         borderColor: trustColor,
         borderWidth: 1.5,
         shadowColor: theme.colors.primaryGlow,
@@ -362,16 +362,19 @@ function getTrustColors(trust: number, isOwn: boolean) {
         elevation: 10,
       }
     : {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: trustColor,
         borderColor: trustColor,
         borderWidth: 1,
       };
 
+  const useDarkText = trust >= 50; // yellow/green need dark text, red stays light
+  const primaryText = useDarkText ? '#0B1221' : theme.colors.text;
+  const badgeTextColor = useDarkText ? '#0B1221' : theme.colors.text;
   return {
     bubbleStyle: baseBubble,
-    textColor: { color: isOwn ? '#0B1221' : theme.colors.text },
-    badgeBackground: { backgroundColor: 'rgba(255,255,255,0.08)', borderColor: trustColor, borderWidth: 1 },
-    badgeText: { color: isOwn ? '#0B1221' : theme.colors.text },
-    timestamp: { color: isOwn ? '#0B1221' : trustColor },
+    textColor: { color: primaryText },
+    badgeBackground: { backgroundColor: trustColor, borderColor: trustColor, borderWidth: 1 },
+    badgeText: { color: badgeTextColor },
+    timestamp: { color: primaryText },
   };
 }
