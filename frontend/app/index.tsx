@@ -121,13 +121,14 @@ const styles = StyleSheet.create({
   card: {
     marginTop: theme.spacing.lg,
     marginHorizontal: theme.spacing.xl,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
     ...theme.shadows.card,
+    shadowColor: theme.colors.primaryGlow,
   },
   label: {
     color: theme.colors.textDim,
@@ -144,9 +145,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     fontSize: 16,
     shadowColor: theme.colors.primaryGlow,
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
   },
   button: {
     backgroundColor: theme.colors.primary,
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     borderWidth: 1,
     borderColor: theme.colors.primaryGlow,
-    ...theme.shadows.button,
+    ...theme.shadows.glowPrimary,
   },
   buttonDisabled: {
     opacity: 0.7,

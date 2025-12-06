@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     gap: theme.spacing.sm,
     ...theme.shadows.card,
+    borderWidth: 1,
   },
   metaRow: {
     flexDirection: 'row',
@@ -269,6 +270,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   badgeText: {
     fontWeight: '700',
@@ -302,9 +305,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     padding: theme.spacing.md,
     gap: theme.spacing.sm,
-    backgroundColor: theme.colors.card,
+    backgroundColor: 'rgba(20,20,28,0.85)',
     borderTopWidth: 1,
     borderColor: theme.colors.border,
+    ...theme.shadows.glowPrimary,
   },
   textInput: {
     flex: 1,
@@ -320,6 +324,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
+    opacity: 0.95,
   },
   sendButton: {
     backgroundColor: theme.colors.primary,
@@ -329,7 +334,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 88,
-    ...theme.shadows.button,
+    ...theme.shadows.glowPrimary,
   },
   sendDisabled: {
     opacity: 0.65,
@@ -342,41 +347,31 @@ const styles = StyleSheet.create({
 });
 
 function getTrustColors(trust: number, isOwn: boolean) {
-  if (trust < 50) {
-    return {
-      bubbleStyle: {
-        backgroundColor: isOwn ? theme.colors.trust.low : '#2b0d16',
-        borderColor: '#fda4af',
+  const trustColor =
+    trust < 50 ? theme.colors.trust.low : trust < 80 ? theme.colors.trust.medium : theme.colors.trust.high;
+
+  const baseBubble = isOwn
+    ? {
+        backgroundColor: theme.colors.primary,
+        borderColor: trustColor,
+        borderWidth: 1.5,
+        shadowColor: theme.colors.primaryGlow,
+        shadowOpacity: 0.4,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 10,
+      }
+    : {
+        backgroundColor: theme.colors.surface,
+        borderColor: trustColor,
         borderWidth: 1,
-      },
-      textColor: { color: isOwn ? '#0B1221' : '#ffe4e6' },
-      badgeBackground: { backgroundColor: 'rgba(255,255,255,0.12)' },
-      badgeText: { color: isOwn ? '#0B1221' : '#ffe4e6' },
-      timestamp: { color: isOwn ? '#0B1221' : '#fecdd3' },
-    };
-  }
-  if (trust < 80) {
-    return {
-      bubbleStyle: {
-        backgroundColor: isOwn ? '#fbbf24' : '#2a210c',
-        borderColor: '#facc15',
-        borderWidth: 1,
-      },
-      textColor: { color: isOwn ? '#0B1221' : '#fefce8' },
-      badgeBackground: { backgroundColor: 'rgba(255,255,255,0.12)' },
-      badgeText: { color: isOwn ? '#0B1221' : '#fefce8' },
-      timestamp: { color: isOwn ? '#0B1221' : '#fde68a' },
-    };
-  }
+      };
+
   return {
-    bubbleStyle: {
-      backgroundColor: isOwn ? theme.colors.trust.high : '#0f291b',
-      borderColor: '#34d399',
-      borderWidth: 1,
-    },
-    textColor: { color: isOwn ? '#0B1221' : '#dcfce7' },
-    badgeBackground: { backgroundColor: 'rgba(255,255,255,0.12)' },
-    badgeText: { color: isOwn ? '#0B1221' : '#dcfce7' },
-    timestamp: { color: isOwn ? '#0B1221' : '#86efac' },
+    bubbleStyle: baseBubble,
+    textColor: { color: isOwn ? '#0B1221' : theme.colors.text },
+    badgeBackground: { backgroundColor: 'rgba(255,255,255,0.08)', borderColor: trustColor, borderWidth: 1 },
+    badgeText: { color: isOwn ? '#0B1221' : theme.colors.text },
+    timestamp: { color: isOwn ? '#0B1221' : trustColor },
   };
 }
